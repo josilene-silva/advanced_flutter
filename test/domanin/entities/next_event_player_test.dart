@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 class NextEventPlayer {
   final String id;
   final String name;
+  late final String initials;
   final String? photo;
   final String? position;
   final bool isConfirmed;
@@ -15,7 +16,9 @@ class NextEventPlayer {
     this.photo,
     this.position,
     this.confirmationDate,
-  });
+  }) {
+    initials = getInitials();
+  }
 
   String getInitials() {
     final names = name.split(' ');
@@ -26,14 +29,14 @@ class NextEventPlayer {
 }
 
 void main() {
-  NextEventPlayer makeSut(String name) =>
-      NextEventPlayer(id: '', name: name, isConfirmed: true);
+  String initialsOf(String name) =>
+      NextEventPlayer(id: '', name: name, isConfirmed: true).initials;
 
   test('should return the first letter of the first and last name', () {
-    expect(makeSut('Josilene Silva').getInitials(), 'JS');
+    expect(initialsOf('Josilene Silva'), 'JS');
 
-    expect(makeSut('Paulo Costa').getInitials(), 'PC');
+    expect(initialsOf('Paulo Costa'), 'PC');
 
-    expect(makeSut('Maria Vitória da Silva').getInitials(), 'MS');
+    expect(initialsOf('Maria Vitória da Silva'), 'MS');
   });
 }
