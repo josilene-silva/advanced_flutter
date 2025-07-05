@@ -26,28 +26,14 @@ class NextEventPlayer {
 }
 
 void main() {
+  NextEventPlayer makeSut(String name) =>
+      NextEventPlayer(id: '', name: name, isConfirmed: true);
+
   test('should return the first letter of the first and last name', () {
-    final player = NextEventPlayer(
-      id: '',
-      name: 'Josilene Silva',
-      isConfirmed: true,
-    );
-    expect(player.getInitials(), 'JS');
+    expect(makeSut('Josilene Silva').getInitials(), 'JS');
 
-    final player2 = NextEventPlayer(
-      id: '',
-      name: 'Paulo Costa',
-      isConfirmed: true,
-    );
+    expect(makeSut('Paulo Costa').getInitials(), 'PC');
 
-    expect(player2.getInitials(), 'PC');
-
-    final player3 = NextEventPlayer(
-      id: '',
-      name: 'Maria Vitória da Silva',
-      isConfirmed: true,
-    );
-
-    expect(player3.getInitials(), 'MS');
+    expect(makeSut('Maria Vitória da Silva').getInitials(), 'MS');
   });
 }
