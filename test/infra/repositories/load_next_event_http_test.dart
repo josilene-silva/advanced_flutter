@@ -9,6 +9,8 @@ import 'package:advanced_flutter/domain/repositories/load_next_event_repository.
 
 import '../../helpers/fakes.dart';
 
+enum DomainError { unexpected }
+
 class LoadNextEventHttpRepository implements LoadNextEventRepository {
   final Client httpClient;
   final String url;
@@ -23,6 +25,9 @@ class LoadNextEventHttpRepository implements LoadNextEventRepository {
       'accept': 'application/json',
     };
     final response = await httpClient.get(uri, headers: headers);
+    if (response.statusCode == 400) {
+      throw DomainError.unexpected;
+    }
     final event = jsonDecode(response.body);
 
     return NextEvent(
@@ -202,5 +207,12 @@ void main() {
     expect(event.players[1].photo, 'any_photo 2');
     expect(event.players[1].position, 'any_position 2');
     expect(event.players[1].confirmationDate, DateTime(2025, 7, 1, 12, 0, 0));
+  });
+
+  test('should return UnexpectedError on 400', () async {
+    httpClient.statusCode = 400;
+    final future = sut.loadNextEvent(groupId: groupId);
+
+    expect(future, throwsA(DomainError.unexpected));
   });
 }
