@@ -1,71 +1,12 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:advanced_flutter/infra/api/resopitories/load_next_event_http_repository.dart';
 import 'package:http/http.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:advanced_flutter/domain/entities/domain_error.dart';
-import 'package:advanced_flutter/domain/entities/next_event.dart';
-import 'package:advanced_flutter/domain/entities/next_event_player.dart';
-import 'package:advanced_flutter/domain/repositories/load_next_event_repository.dart';
 
 import '../../helpers/fakes.dart';
-
-class LoadNextEventHttpRepository implements LoadNextEventRepository {
-  final Client httpClient;
-  final String url;
-
-  LoadNextEventHttpRepository({required this.httpClient, required this.url});
-
-  @override
-  Future<NextEvent> loadNextEvent({required String groupId}) async {
-    final uri = Uri.parse(url.replaceFirst(':groupId', groupId));
-    final headers = {
-      'content-type': 'application/json',
-      'accept': 'application/json',
-    };
-    final response = await httpClient.get(uri, headers: headers);
-    switch (response.statusCode) {
-      case 200:
-        break;
-      case 401:
-        throw DomainError.sessionExpired;
-      default:
-        throw DomainError.unexpected;
-    }
-
-    if (response.statusCode == 400) {
-      throw DomainError.unexpected;
-    } else if (response.statusCode == 401) {
-      throw DomainError.sessionExpired;
-    } else if (response.statusCode == 403) {
-      throw DomainError.unexpected;
-    } else if (response.statusCode == 404) {
-      throw DomainError.unexpected;
-    } else if (response.statusCode == 500) {
-      throw DomainError.unexpected;
-    }
-    final event = jsonDecode(response.body);
-
-    return NextEvent(
-      groupName: event['groupName'],
-      date: DateTime.parse(event['date']),
-      players: event['players']
-          .map<NextEventPlayer>(
-            (player) => NextEventPlayer(
-              id: player['id'],
-              name: player['name'],
-              isConfirmed: player['isConfirmed'],
-              photo: player['photo'],
-              position: player['position'],
-              confirmationDate: DateTime.tryParse(
-                player['confirmationDate'] ?? '',
-              ),
-            ),
-          )
-          .toList(),
-    );
-  }
-}
 
 class HttpClientSpy implements Client {
   String? method;
