@@ -25,6 +25,15 @@ class LoadNextEventHttpRepository implements LoadNextEventRepository {
       'accept': 'application/json',
     };
     final response = await httpClient.get(uri, headers: headers);
+    switch (response.statusCode) {
+      case 200:
+        break;
+      case 401:
+        throw DomainError.sessionExpired;
+      default:
+        throw DomainError.unexpected;
+    }
+
     if (response.statusCode == 400) {
       throw DomainError.unexpected;
     } else if (response.statusCode == 401) {
