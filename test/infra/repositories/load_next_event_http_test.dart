@@ -3,13 +3,12 @@ import 'dart:typed_data';
 import 'package:http/http.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:advanced_flutter/domain/entities/domain_error.dart';
 import 'package:advanced_flutter/domain/entities/next_event.dart';
 import 'package:advanced_flutter/domain/entities/next_event_player.dart';
 import 'package:advanced_flutter/domain/repositories/load_next_event_repository.dart';
 
 import '../../helpers/fakes.dart';
-
-enum DomainError { unexpected, sessionExpired }
 
 class LoadNextEventHttpRepository implements LoadNextEventRepository {
   final Client httpClient;
@@ -75,6 +74,12 @@ class HttpClientSpy implements Client {
   Map<String, String>? headers;
   String responseJson = '';
   int statusCode = 200;
+
+  void simulateBadRequestError() => statusCode = 400;
+  void simulateUnauthorizedError() => statusCode = 401;
+  void simulateForbiddenError() => statusCode = 403;
+  void simulateNotFoundError() => statusCode = 404;
+  void simulateServerError() => statusCode = 500;
 
   @override
   void close() {}
@@ -227,35 +232,35 @@ void main() {
   });
 
   test('should return UnexpectedError on 400', () async {
-    httpClient.statusCode = 400;
+    httpClient.simulateBadRequestError();
     final future = sut.loadNextEvent(groupId: groupId);
 
     expect(future, throwsA(DomainError.unexpected));
   });
 
   test('should return SessionExpiredError on 401', () async {
-    httpClient.statusCode = 401;
+    httpClient.simulateUnauthorizedError();
     final future = sut.loadNextEvent(groupId: groupId);
 
     expect(future, throwsA(DomainError.sessionExpired));
   });
 
   test('should return UnexpectedError on 403', () async {
-    httpClient.statusCode = 403;
+    httpClient.simulateForbiddenError();
     final future = sut.loadNextEvent(groupId: groupId);
 
     expect(future, throwsA(DomainError.unexpected));
   });
 
   test('should return UnexpectedError on 404', () async {
-    httpClient.statusCode = 404;
+    httpClient.simulateNotFoundError();
     final future = sut.loadNextEvent(groupId: groupId);
 
     expect(future, throwsA(DomainError.unexpected));
   });
 
   test('should return UnexpectedError on 500', () async {
-    httpClient.statusCode = 500;
+    httpClient.simulateServerError();
     final future = sut.loadNextEvent(groupId: groupId);
 
     expect(future, throwsA(DomainError.unexpected));
