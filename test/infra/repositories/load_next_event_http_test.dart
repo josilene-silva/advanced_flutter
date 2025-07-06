@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'dart:typed_data';
 
+import 'package:advanced_flutter/domain/entities/next_event.dart';
+import 'package:advanced_flutter/domain/entities/next_event_player.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart';
 
@@ -13,13 +15,33 @@ class LoadNextEventHttpRepository {
 
   LoadNextEventHttpRepository({required this.httpClient, required this.url});
 
-  Future<void> loadNextEvent({required String groupId}) async {
+  Future<NextEvent> loadNextEvent({required String groupId}) async {
     final uri = Uri.parse(url.replaceFirst(':groupId', groupId));
     final headers = {
       'content-type': 'application/json',
       'accept': 'application/json',
     };
-    await httpClient.get(uri, headers: headers);
+    final response = await httpClient.get(uri, headers: headers);
+    final event = jsonDecode(response.body);
+
+    return NextEvent(
+      groupName: event['groupName'],
+      date: DateTime.parse(event['date']),
+      players: event['players']
+          .map<NextEventPlayer>(
+            (player) => NextEventPlayer(
+              id: player['id'],
+              name: player['name'],
+              isConfirmed: player['isConfirmed'],
+              photo: player['photo'],
+              position: player['position'],
+              confirmationDate: DateTime.tryParse(
+                player['confirmationDate'] ?? '',
+              ),
+            ),
+          )
+          .toList(),
+    );
   }
 }
 
@@ -28,6 +50,8 @@ class HttpClientSpy implements Client {
   String? url;
   int callsCount = 0;
   Map<String, String>? headers;
+  String responseJson = '';
+  int statusCode = 200;
 
   @override
   void close() {}
@@ -48,7 +72,7 @@ class HttpClientSpy implements Client {
     callsCount++;
     this.url = url.toString();
     this.headers = headers;
-    return Response("", 200);
+    return Response(responseJson, statusCode);
   }
 
   @override
@@ -115,6 +139,27 @@ void main() {
   setUp(() {
     groupId = anyString();
     httpClient = HttpClientSpy();
+    httpClient.responseJson = '''
+      {
+        "groupName": "any_name",
+        "date": "2025-08-01T12:00:00",
+        "players": [
+          {
+            "id": "any_id",
+            "name": "any_name",
+            "isConfirmed": true
+          },
+          {
+            "id": "any_id 2",
+            "name": "any_name 2",
+            "isConfirmed": false,
+            "photo": "any_photo 2",
+            "position": "any_position 2",
+            "confirmationDate": "2025-07-01T12:00:00"
+          }
+        ]
+      }
+    ''';
     sut = LoadNextEventHttpRepository(httpClient: httpClient, url: url);
   });
   test('should request with correct method', () async {
@@ -125,7 +170,6 @@ void main() {
   });
 
   test('should request with correct url', () async {
-    sut = LoadNextEventHttpRepository(httpClient: httpClient, url: url);
     await sut.loadNextEvent(groupId: groupId);
 
     expect(
@@ -135,10 +179,27 @@ void main() {
   });
 
   test('should request with correct headers', () async {
-    sut = LoadNextEventHttpRepository(httpClient: httpClient, url: url);
     await sut.loadNextEvent(groupId: groupId);
 
     expect(httpClient.headers?['content-type'], 'application/json');
     expect(httpClient.headers?['accept'], 'application/json');
+  });
+
+  test('should return NetEvent on 200', () async {
+    final event = await sut.loadNextEvent(groupId: groupId);
+
+    expect(event.groupName, 'any_name');
+    expect(event.date, DateTime(2025, 8, 1, 12, 0, 0));
+
+    expect(event.players[0].id, 'any_id');
+    expect(event.players[0].name, 'any_name');
+    expect(event.players[0].isConfirmed, true);
+
+    expect(event.players[1].id, 'any_id 2');
+    expect(event.players[1].name, 'any_name 2');
+    expect(event.players[1].isConfirmed, false);
+    expect(event.players[1].photo, 'any_photo 2');
+    expect(event.players[1].position, 'any_position 2');
+    expect(event.players[1].confirmationDate, DateTime(2025, 7, 1, 12, 0, 0));
   });
 }
