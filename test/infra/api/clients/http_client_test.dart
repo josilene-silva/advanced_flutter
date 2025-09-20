@@ -9,12 +9,14 @@ class HttpClient {
 
   HttpClient({required this.client});
 
-  Future<void> get({required String url}) async {
-    final headers = {
-      'content-type': 'application/json',
-      'accept': 'application/json',
-    };
-    await client.get(Uri.parse(url), headers: headers);
+  Future<void> get({required String url, Map<String, String>? headers}) async {
+    final allHeaders = (headers ?? {})
+      ..addAll({
+        'content-type': 'application/json',
+        'accept': 'application/json',
+      });
+
+    await client.get(Uri.parse(url), headers: allHeaders);
   }
 }
 
@@ -47,6 +49,14 @@ void main() {
 
       expect(client.headers?['content-type'], 'application/json');
       expect(client.headers?['accept'], 'application/json');
+    });
+
+    test('should append headers', () async {
+      await sut.get(url: url, headers: {'any-header': 'any-value'});
+
+      expect(client.headers?['content-type'], 'application/json');
+      expect(client.headers?['accept'], 'application/json');
+      expect(client.headers?['any-header'], 'any-value');
     });
   });
 }
