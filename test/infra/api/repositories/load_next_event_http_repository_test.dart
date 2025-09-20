@@ -65,7 +65,7 @@ void main() {
     expect(httpClient.headers?['accept'], 'application/json');
   });
 
-  test('should return NetEvent on 200', () async {
+  test('should return NextEvent on 200', () async {
     final event = await sut.loadNextEvent(groupId: groupId);
 
     expect(event.groupName, 'any_name');
