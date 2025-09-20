@@ -10,7 +10,11 @@ class HttpClient {
   HttpClient({required this.client});
 
   Future<void> get({required String url}) async {
-    await client.get(Uri.parse(url));
+    final headers = {
+      'content-type': 'application/json',
+      'accept': 'application/json',
+    };
+    await client.get(Uri.parse(url), headers: headers);
   }
 }
 
@@ -36,6 +40,13 @@ void main() {
       await sut.get(url: url);
 
       expect(client.url, url);
+    });
+
+    test('should request with default headers', () async {
+      await sut.get(url: url);
+
+      expect(client.headers?['content-type'], 'application/json');
+      expect(client.headers?['accept'], 'application/json');
     });
   });
 }
