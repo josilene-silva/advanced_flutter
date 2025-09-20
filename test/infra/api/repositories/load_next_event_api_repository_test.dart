@@ -1,27 +1,9 @@
-import 'package:advanced_flutter/infra/api/clients/http_get_client.dart';
 import 'package:advanced_flutter/infra/api/repositories/load_next_event_api_repository.dart';
-import 'package:advanced_flutter/infra/types/json.dart';
 
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../helpers/fakes.dart';
-
-class HttpGetClientSpy implements HttpGetClient {
-  String? url;
-  int callsCount = 0;
-  Json? params;
-  dynamic response;
-  Error? error;
-
-  @override
-  Future<T> get<T>({required String url, Json? params}) async {
-    this.url = url;
-    this.params = params;
-    callsCount++;
-    if (error != null) throw error!;
-    return response;
-  }
-}
+import '../clients/http_get_client_spy.dart';
 
 void main() {
   late String groupId;
@@ -59,7 +41,7 @@ void main() {
     expect(httpClient.callsCount, 1);
   });
 
-  test('should return NetEvent on success', () async {
+  test('should return NextEvent on success', () async {
     final event = await sut.loadNextEvent(groupId: groupId);
 
     expect(event.groupName, 'any_name');
